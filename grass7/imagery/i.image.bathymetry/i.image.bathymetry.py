@@ -233,7 +233,9 @@ def main():
             # For GWmodel in R
             r = g.tempfile()
             r_file = open(r, 'w')
-            libs = ['GWmodel', 'data.table', 'rgrass7', 'rgdal', 'raster']
+            # Add sp because raster will fail without it. Add stars, may be added automatically with sp. 
+            # Add rgeos because of warning message that polygon library is missing. 
+            libs = ['GWmodel', 'data.table', 'rgrass7', 'rgdal','sp', 'raster','stars','rgeos']
             for i in libs:
                 install = 'if(!is.element("%s", installed.packages()[,1])){\n' % i
                 install += "cat('\\n\\nInstalling %s package from CRAN\n')\n" % i
@@ -246,6 +248,8 @@ def main():
                 libraries = 'library(%s)\n' % i
                 r_file.write(libraries)
             Green_new, sep, tail = Green.partition('@')
+            # Add use_sp() or raster will not use sp and will fail.This was a change in R after original script written. 
+            r_file.write('use_sp()')
             r_file.write('grass_file = readRAST("tmp_crctd%s")\n' % Green_new)
             r_file.write('raster_file = raster(grass_file)\n')
             frame_file = 'pred = as.data.frame(raster_file,na.rm = TRUE,xy = TRUE)\n'
@@ -290,7 +294,10 @@ def main():
                     '(Rapid_ref.sdf))\n'
             r_file.write(ref_file)
             l = []
-            predict = g.read_command("g.tempfile", pid=os.getpid()).strip() + '.txt'
+            #predict = g.read_command("g.tempfile", pid=os.getpid()).strip() + '.txt'
+            # change predict to a static filename until os portable method directory/filename can be generated. Requires
+            #that user have write access to directory command is started from.
+            predict='tempbathy.txt'
             # Join the corrected bands in to a string
             le = len(crctd_lst)
             for i in crctd_lst:
