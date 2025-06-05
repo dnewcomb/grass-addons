@@ -267,7 +267,7 @@ def main():
         # in a DEM. This section compares the elevation of the modeled water surface to the shoreline elevations. 
         # For estimated elevations of the shoreline that are less than or equal to the modeled water surface, 
         # the elevation of the shoreline is raised to .001 vertical units) above the modeled water level. 
-        # .001 meters or .001 feet are well below the .1 meter vertical accuracy of the current standards for LiDAr collection. 
+        # .001 meters or .001 feet are well below the .1 meter vertical accuracy of the current standards for LiDAR collection. 
         tmp_3depshore = get_name("shore_3dep")
         gs.mapcalc(
         f"{tmp_3depshore} = if ({tmp_water_elevation} >= {tmp_rfillstats},({tmp_water_elevation} +.001),{tmp_rfillstats})"
