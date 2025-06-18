@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #########################################################################
 #
 # MODULE:     r.hydro.flatten
 #
-# AUTHOR(S):  Anna Petrasova <kratochanna gmail com>
+# AUTHOR(S):  Anna Petrasova <kratochanna gmail com> 
 #
 # PURPOSE:    Derive elevation of water bodies for hydro-flattening
 #
@@ -46,6 +46,12 @@
 # % key: filled_elevation
 # % required: no
 # % description: Raster map representing filled digital elevation model
+# %end
+# %option G_OPT_R_OUTPUT
+# % key: stddev_limit
+# % required: no
+# % description:Limit of standad deviation values filled as flat in filled elevation layer 
+# % Label: Standard deviation limit for flat fill 
 # %end
 # %option
 # % key: percentile
@@ -269,14 +275,26 @@ def main():
         # the elevation of the shoreline is raised to .001 vertical units) above the modeled water level.
         # .001 meters or .001 feet are well below the .1 meter vertical accuracy of the current standards for LiDAR collection.
         tmp_shore_3dep = get_name("shore_3dep")
+        tmp_first_fill = get_name("first_fill")
+        tmp_first_fill_holes = get_name("first_fill_holes")
+        tmp_stddev = "5"
+        tmp_stddev = options["stddev_limit"]
         gs.mapcalc(
             f"{tmp_shore_3dep} = if ({tmp_water_elevation} >= {tmp_rfillstats}, ({tmp_water_elevation} + .001), {tmp_rfillstats})"
         )
         gs.run_command(
             "r.patch",
             input=[options["water_elevation"], tmp_shore_3dep, tmp_rfillstats],
-            output=options["filled_elevation"],
+            output= tmp_first_fill,
         )
+        # This section uses r.mapcalc to punch holes in the initial filled DEM for areas where the standard deviation of the edge values are 
+        # higher than the given limit.
+        gs.mapcalc(
+            f"{tmp_first_fill_holes} = {tmp_first_fill} * if( isnull(if({tmp_water_elevation_stddev_zonal} < {tmp_stddev},null())),1,null())"
+        )
+        # This section runs r.fillnulls to fill in the holes punched with the previous step.  The tension and the memory are hard coded. 
+        # It might be wise to make at least the memory an input option. 
+        gs.run_command("r.fillnulls",input=tmp_first_fill_holes,output=options["filled_elevation"],tension="150",memory="4000")
         gs.run_command("r.colors", map=options["filled_elevation"], raster=ground)
         gs.raster_history(options["filled_elevation"])
 
