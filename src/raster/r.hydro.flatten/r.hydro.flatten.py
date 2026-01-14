@@ -52,7 +52,7 @@
 # % type: double
 # % required: yes
 # % description: Percentile of elevation to determine water level
-# % answer: 5
+# % answer: 12
 # %end
 # %option
 # % key: max_stddev
